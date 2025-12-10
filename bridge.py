@@ -2,7 +2,6 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
-import mayavi.mlab as  mv
 
 # Unités SI
 
@@ -10,11 +9,14 @@ L               = 0.205
 w               = 0.035
 h               = 0.010
 rho             = 750
+#rho             = 0
 beta            = 1/16 * (16 / 3 - 3.36 * h / w * (1 - 1/12 * h**4 / w**4))
 K               = beta * h**3 * w
 eta             = 0.01 
 E               = 13.3e9 * (1 + 1j * eta)
+#E               = 0
 G               = 0.93e9 * (1 + 1j * eta)
+#G               = 0
 Iz              = w * h**3 / 12
 Iy              = h * w**3 / 12
 J               = (w * h**3 + h * w**3) / 12
@@ -40,8 +42,8 @@ params = np.array((L,
                    G,
                    fric))
 
-Delta_x = 40e-3
-Delta_y = 20e-3
+Delta_x = 30e-3
+Delta_y = 10e-3
 
 f_max       = 5000
 f_res       = 1e-8
@@ -90,7 +92,7 @@ Np          = Nx*Ny*Nz + Nx_other*Ny_other*Nz_other
 
 # kappa_max   = (rho * h * w / (E * I))**(1/4) * np.sqrt(w_max)
 
-kappanL         = np.load("beam_kappaL.npy")
+kappanL         = np.load("Data/beam_kappaL.npy")
 kappan          = kappanL / L
 kappan          = kappan[kappan < kappa_max]
 
@@ -127,7 +129,7 @@ phin_flz    = np.sqrt(phinx_flz**2 + phiny_flz**2 + phinz_flz**2)
 
 Int_flz     = np.zeros(N_flz)
 
-file        = np.load("Integral_beam_mode_0.npz")
+file        = np.load("Data/Integral_beam_mode_0.npz")
 Int_flz[0]   = 1/kappan[0] * file["I_phi_phi"] 
 Int_flz[1:]  = 1/(2 * kappan[1:]) * (np.sin(kappan[1:]*L)**2 - \
                                     2 * np.sin(2*kappan[1:]*L) + \
@@ -146,7 +148,8 @@ Fz_fact_flz[:,z==z.min()]   = phinz_flz[:,z==z.min()]
 
 # Normalization
 
-fact        = 1 / np.abs(phin_flz).max(axis=1)[:,np.newaxis]
+#fact        = 1 / np.abs(phin_flz).max(axis=1)[:,np.newaxis]
+fact        = 1 / np.sqrt(m_flz)[:,np.newaxis]
 
 phinx_flz   = fact * phinx_flz
 phiny_flz   = fact * phiny_flz
@@ -165,7 +168,7 @@ c_flz       = fact**2 * c_flz
 
 # kappa_max   = (rho * h * w / (E * I))**(1/4) * np.sqrt(w_max)
 
-kappanL         = np.load("beam_kappaL.npy")
+kappanL         = np.load("Data/beam_kappaL.npy")
 kappan          = kappanL / L
 kappan          = kappan[kappan < kappa_max]
 
@@ -202,7 +205,7 @@ phin_fly = np.sqrt(phinx_fly**2 + phiny_fly**2 + phinz_fly**2)
 
 Int_fly      = np.zeros(N_fly)
 
-file        = np.load("Integral_beam_mode_0.npz")
+file        = np.load("Data/Integral_beam_mode_0.npz")
 Int_fly[0]   = 1/kappan[0] * file["I_phi_phi"] 
 Int_fly[1:]  = 1/(2 * kappan[1:]) * (np.sin(kappan[1:]*L)**2 - \
                                     2 * np.sin(2*kappan[1:]*L) + \
@@ -221,7 +224,8 @@ Fz_fact_fly[:,z==z.min()]   = phinz_fly[:,z==z.min()]
 
 # Normalization
 
-fact        = 1 / np.abs(phin_fly).max(axis=1)[:,np.newaxis]
+# fact        = 1 / np.abs(phin_fly).max(axis=1)[:,np.newaxis]
+fact        = 1 / np.sqrt(m_fly)[:,np.newaxis]
 
 phinx_fly   = fact * phinx_fly
 phiny_fly   = fact * phiny_fly
@@ -272,7 +276,8 @@ Fz_fact_to[:,z==z.min()]    = phinz_to[:,z==z.min()]
 
 # Normalization
 
-fact        = 1 / np.abs(phin_to).max(axis=1)[:,np.newaxis]
+# fact        = 1 / np.abs(phin_to).max(axis=1)[:,np.newaxis]
+fact        = 1 / np.sqrt(m_to)[:,np.newaxis]
 
 phinx_to    = fact * phinx_to
 phiny_to    = fact * phiny_to
@@ -318,7 +323,8 @@ Fz_fact_tr      = np.zeros((N_tr,Np))
 
 # Normalization
 
-fact        = 1 / np.abs(phin_tr).max(axis=1)[:,np.newaxis]
+# fact        = 1 / np.abs(phin_tr).max(axis=1)[:,np.newaxis]
+fact        = 1 / np.sqrt(m_tr)[:,np.newaxis]
 
 phinx_tr    = fact * phinx_tr
 phiny_tr    = fact * phiny_tr
@@ -354,6 +360,19 @@ Fz_fact_tx                  = np.zeros((1,Np))
 Fz_fact_tx[:,z==z.max()]    = phinz_tx[:,z==z.max()] 
 Fz_fact_tx[:,z==z.min()]    = phinz_tx[:,z==z.min()]
 
+# Normalization
+
+fact        = 1 / m_tx[:,np.newaxis]
+
+phinx_tx    = fact * phinx_tx
+phiny_tx    = fact * phiny_tx
+phinz_tx    = fact * phinz_tx
+
+fact        = fact.flatten()
+
+m_tx        = fact * m_tx
+c_tx        = fact * c_tx
+
 # Translation en y
 
 phinx_ty    = np.zeros((1,Np))
@@ -373,6 +392,19 @@ Fz_fact_ty                  = np.zeros((1,Np))
 Fz_fact_ty[:,z==z.max()]    = phinz_ty[:,z==z.max()] 
 Fz_fact_ty[:,z==z.min()]    = phinz_ty[:,z==z.min()]
 
+# Normalization
+
+fact        = 1 / m_ty[:,np.newaxis]
+
+phinx_ty    = fact * phinx_ty
+phiny_ty    = fact * phiny_ty
+phinz_ty    = fact * phinz_ty
+
+fact        = fact.flatten()
+
+m_ty        = fact * m_ty
+c_ty        = fact * c_ty
+
 # Translation en z
 
 phinx_tz    = np.zeros((1,Np))
@@ -391,6 +423,19 @@ Fy_fact_tz[:,z==z.min()]    = phiny_tz[:,z==z.min()]
 Fz_fact_tz                  = np.zeros((1,Np))
 Fz_fact_tz[:,z==z.max()]    = phinz_tz[:,z==z.max()] 
 Fz_fact_tz[:,z==z.min()]    = phinz_tz[:,z==z.min()]
+
+# Normalization
+
+fact        = 1 / m_tz[:,np.newaxis]
+
+phinx_tz    = fact * phinx_tz
+phiny_tz    = fact * phiny_tz
+phinz_tz    = fact * phinz_tz
+
+fact        = fact.flatten()
+
+m_tz        = fact * m_tz
+c_tz        = fact * c_tz
 
 # Rotation en x
 
@@ -414,7 +459,8 @@ Fz_fact_rx[:,z==z.min()]    = phinz_rx[:,z==z.min()]
 
 # Normalization
 
-fact        = 1 / np.abs(phin_rx).max(axis=1)[:,np.newaxis]
+# fact        = 1 / np.abs(phin_rx).max(axis=1)[:,np.newaxis]
+fact        = 1 / m_rx[:,np.newaxis]
 
 phinx_rx    = fact * phinx_rx
 phiny_rx    = fact * phiny_rx
@@ -447,7 +493,8 @@ Fz_fact_ry[:,z==z.min()]    = phinz_ry[:,z==z.min()]
 
 # Normalization
 
-fact        = 1 / np.abs(phin_ry).max(axis=1)[:,np.newaxis]
+# fact        = 1 / np.abs(phin_ry).max(axis=1)[:,np.newaxis]
+fact        = 1 / m_ry[:,np.newaxis]
 
 phinx_ry    = fact * phinx_ry
 phiny_ry    = fact * phiny_ry
@@ -480,7 +527,7 @@ Fz_fact_rz[:,z==z.min()]    = phinz_rz[:,z==z.min()]
 
 # Normalization
 
-fact        = 1 / np.abs(phin_rz).max(axis=1)[:,np.newaxis]
+fact        = 1 / m_rz[:,np.newaxis]
 
 phinx_rz    = fact * phinx_rz
 phiny_rz    = fact * phiny_rz
@@ -639,7 +686,7 @@ plt.colorbar()
 
 # %% Save modal basis
 
-name = "Bridge_modal_basis_Dx_"+ f"{(np.round(Delta_x*100,3)):.3f}" +"_Dy_"+\
+name = "Data/Bridge_modal_basis_Dx_"+ f"{(np.round(Delta_x*100,3)):.3f}" +"_Dy_"+\
         f"{(np.round(Delta_y*100,3)):.3f}"+"_cm"
 
 np.savez(name, x=x, y=y, z=z, wn=wn, mn=mn, kn=kn, cn=cn, phinx=phinx, 

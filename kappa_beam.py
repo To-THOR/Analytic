@@ -19,4 +19,4 @@ kappanL         = - betan / alphan
 
 print(kappanL)
 
-np.save("beam_kappaL.npy", kappanL)
+np.save("Data/beam_kappaL.npy", kappanL)

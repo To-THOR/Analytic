@@ -170,7 +170,7 @@ plt.ylabel("zdd (dB)")
 #%% Save sum-FRF and FRF at excitation
 
 FRF_name = name + "_FRF.npz"
-np.savez(FRF_name, freq = freq ,sum_FRF = sum_FRF_Z, sum_FRFd = sum_FRF_Zd, 
+np.savez("Data/"+FRF_name, freq = freq ,sum_FRF = sum_FRF_Z, sum_FRFd = sum_FRF_Zd, 
          sum_FRFdd = sum_FRF_Zdd, exc_FRF = z_phys_freq, 
          exc_FRFd = zd_phys_freq, exc_FRFdd = zdd_phys_freq, 
          x_exc = x[idx_exc], y_exc = y[idx_exc], z_exc = z[idx_exc])
@@ -232,7 +232,7 @@ def update(frame):
 
 ani = animation.FuncAnimation(fig=fig, func=update, frames=N_anim, interval=1)
 
-ani_name = name+"_ope_deform_"+str(mode_idx)+".gif"
+ani_name = "Animations"+name+"_ope_deform_"+str(mode_idx)+".gif"
 ani.save(ani_name, writer="pillow")
 print("Animation saved as " + ani_name)
 
@@ -249,7 +249,7 @@ for i in range(N_peaks):
     X_op[i] = phix @ Q[:,peaks_idx[i]]  
     Y_op[i] = phiy @ Q[:,peaks_idx[i]]  
 
-np.savez(name+"_ope_deform.npz", x=x, y=y, z=z, freq=peaks_freq,\
+np.savez("Data"+name+"_ope_deform.npz", x=x, y=y, z=z, freq=peaks_freq,\
         X_op=X_op, Y_op=Y_op, Z_op=Z_op)
     
 print("Operational deforms saved as " + name + "_ope_deform.npz")

@@ -8,8 +8,8 @@ from scipy.io.wavfile import write
 
 #%%
 
-Dx = "4.100"
-Dy = "3.500"
+Dx = "3.417"
+Dy = "1.167"
 
 T   = "70"
 mu  = "380"
@@ -19,9 +19,9 @@ guitar                  = False
 system                  = "Bridge"
 modal                   = True
 null                    = False
-null_null               = True
-dim3_coupling           = False
-constraint_correction   = True
+null_null               = False
+dim3_coupling           = True
+constraint_correction   = False
 
 if system != "String":
     if coupled:
@@ -33,8 +33,9 @@ if system != "String":
         name = system + "_modal_basis_Dx_" + Dx + "_Dy_" + Dy + "_cm.npz"
 else:
      name = system + "_modal_basis_Dy_" + Dy + "_cm" + "_T_" + T + "_N_mu_" + mu + "_mg.m-1.npz"     
-    
-file = np.load(name)
+
+name = name
+file = np.load("Data/" + name)
 print("File " + name + " opened.")
 
 x           = file['x']
@@ -60,7 +61,7 @@ phiny = zscale * phiny / np.abs(phin).max(axis=-1)[:,np.newaxis]
 phinz = zscale * phinz / np.abs(phin).max(axis=-1)[:,np.newaxis]
 phin  = np.sqrt(phinx**2 + phiny**2 + phinz**2)
 
-idx_mode    = 32 
+idx_mode    = 0
 N           = 25
 
 T   = 2 *np.pi 
@@ -88,8 +89,8 @@ def update(frame):
 ani = animation.FuncAnimation(fig=fig, func=update, frames=N, interval=1)
 #plt.show()
 
-ani.save(name[:-4]+"_mode_"+str(idx_mode)+".gif", writer="pillow")
-print("Frequency = "+str(1/(2*np.pi)*np.sqrt(kn[idx_mode]/mn[idx_mode])))
+ani.save("Animations/"+name[:-4]+"_mode_"+str(idx_mode)+".gif", writer="pillow")
+print("Frequency = "+ str(np.round(1/(2*np.pi)*np.sqrt(kn[idx_mode]/mn[idx_mode])))+" Hz")
 
 #%%
 
@@ -134,7 +135,7 @@ if system == "String":
     z_t_norm = z_t_norm * np.iinfo('int32').max
     z_t_norm = z_t_norm.astype(np.int32)
     z_t_norm = np.pad(z_t_norm, (Fs,0))
-    write("String_test.wav", Fs, z_t_norm)
+    write("Audio/String_test.wav", Fs, z_t_norm)
     
     plt.figure()
     plt.plot(z_t_norm)

@@ -19,7 +19,7 @@ print(I)
 print(I_litt)
 #%% Flexion : fonction asymptotique
 
-values      = np.load("beam_kappaL.npy")
+values      = np.load("Data/beam_kappaL.npy")
 mode        = 0
 u           = np.linspace(0,values[mode],10000)
 du          = u[1] - u[0] 
@@ -119,13 +119,13 @@ print(np.abs(I_true - III) / I_true * 100, "%")
 #%%
 
 if mode==0:
-    np.savez("Integral_beam_mode_0.npz", I_phi_phi = I_true, 
+    np.savez("Data/Integral_beam_mode_0.npz", I_phi_phi = I_true, 
              I_dphi_dphi = Id_true, I_phi_ddphi = Iodd_true, I_ddphi_ddphi = Idd_true)
     
 #%% Orthogonalité
 
 L       = 1
-kappanL = np.load("beam_kappaL.npy")
+kappanL = np.load("Data/beam_kappaL.npy")
 kappan  = kappanL / L
 Nm      = kappan.size
 Nx      = 10000

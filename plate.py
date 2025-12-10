@@ -2,7 +2,6 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
-import mayavi.mlab as  mv
 
 # Unités SI
 
@@ -51,8 +50,8 @@ params = np.array((Lx,
                    Lb,
                    wb))
 
-Delta_x = 20e-3
-Delta_y = 20e-3
+Delta_x = 30e-3
+Delta_y = 10e-3
 
 f_max           = 5000
 # w_max       = 2 * np.pi * f_max
@@ -150,6 +149,22 @@ Fy_fact                 = np.zeros((Nm,Np))
 Fz_fact                 = np.zeros((Nm,Np))
 Fz_fact[:,z==z.max()]   = phimnz[:,z==z.max()]
 
+# Normalization
+
+fact        = 1 / np.sqrt(mmn)[:,np.newaxis]
+
+phinx       = fact * phimnx
+phiny       = fact * phimny
+phinz       = fact * phimnz
+Fx_fact     = fact * Fx_fact
+Fy_fact     = fact * Fy_fact
+Fz_fact     = fact * Fz_fact
+
+fact        = fact.flatten()
+
+mmn         = fact**2 * mmn
+kmn         = fact**2 * kmn
+cmn         = fact**2 * cmn
 
 #%% Plot box
 
@@ -177,7 +192,7 @@ plt.colorbar()
     
 # %% Save modal basis
 
-name = "Plate_modal_basis_Dx_"+ f"{(np.round(Delta_x*100,3)):.3f}" +"_Dy_"+\
+name = "Data/Plate_modal_basis_Dx_"+ f"{(np.round(Delta_x*100,3)):.3f}" +"_Dy_"+\
         f"{(np.round(Delta_y*100,3)):.3f}"+"_cm"
         
 np.savez(name, x=x, y=y, z=z, wn=wmn, mn=mmn, kn=kmn, cn=cmn, phinx=phimnx, 

@@ -5,24 +5,23 @@ import numpy as np
 import matplotlib.pyplot as plt
 import scipy.sparse as sp
 from scipy.io.wavfile import write
-from scipy.signal import ShortTimeFFT
 from scipy.linalg import null_space
 import matplotlib.cm as cm
 import time
 
 #%% Load modal bases
 
-dim3_coupling   = False
+dim3_coupling   = True
 null            = False
-null_null       = True
+null_null       = False
 
-Dx = "4.100"
-Dy = "3.500"
+Dx = "3.417"
+Dy = "1.167"
 
 name = "Plaque_Chevalet_"+ null * "Zero_"+ null_null * "Zero_Zero_"+ "Modal_Dx_"+Dx+"_Dy_"+Dy+"_cm"+ \
         dim3_coupling * "_3D_coupled" 
 
-file = np.load("Bridge_"+ null * "Zero_"+"modal_basis_Dx_"+Dx+"_Dy_"+Dy+"_cm.npz")
+file = np.load("Data/Bridge_"+ null * "Zero_"+ null_null * "Zero_Zero_"+"modal_basis_Dx_"+Dx+"_Dy_"+Dy+"_cm.npz")
 
 x_c             = file['x']
 y_c             = file['y']
@@ -43,7 +42,7 @@ params_c        = file['params']
 Nm_c    = wn_c.size
 N_c     = x_c.size
 
-file = np.load("Plate_modal_basis_Dx_"+Dx+"_Dy_"+Dy+"_cm.npz")
+file = np.load("Data/Plate_modal_basis_Dx_"+Dx+"_Dy_"+Dy+"_cm.npz")
 
 x_p             = file['x']
 y_p             = file['y']
@@ -164,10 +163,13 @@ N_s = A.shape[0]
 
 L       = null_space(A)
 
+Nm_tilda = L.shape[-1]
+
 M_tilda             = np.diag(L.T @ M @ L)
 C_tilda             = np.diag(L.T @ C @ L)
 K_tilda             = np.diag(L.T @ K @ L)
-wn                  = np.sqrt(K_tilda / M_tilda)
+wn_tilda            = np.zeros(Nm_tilda)  
+wn_tilda[M_tilda!=0]= np.sqrt(K_tilda[M_tilda!=0] / M_tilda[M_tilda!=0])
 phix_tilda          = phix @ L
 phiy_tilda          = phiy @ L
 phiz_tilda          = phiz @ L
@@ -175,15 +177,45 @@ Fx_factor_tilda     = Fx_factor @ L
 Fy_factor_tilda     = Fy_factor @ L
 Fz_factor_tilda     = Fz_factor @ L
 
+#%% Sort by modal frequency
+
+idx = np.argsort(wn_tilda)
+
+M_tilda             = M_tilda[idx]
+C_tilda             = C_tilda[idx]
+K_tilda             = K_tilda[idx]
+wn_tilda            = wn_tilda[idx]
+phix_tilda          = phix_tilda[:,idx]
+phiy_tilda          = phiy_tilda[:,idx]
+phiz_tilda          = phiz_tilda[:,idx]
+Fx_factor_tilda     = Fx_factor_tilda[:,idx]
+Fy_factor_tilda     = Fy_factor_tilda[:,idx]
+Fz_factor_tilda     = Fz_factor_tilda[:,idx]
+
 #%% Phi normalization
 
+phi_tilda = np.sqrt(phix_tilda**2 + phiy_tilda**2 + phiz_tilda**2)
 
+fact        = 1 / np.abs(phi_tilda).max(axis=0)[np.newaxis]
+
+phix_tilda      = fact * phix_tilda
+phiy_tilda      = fact * phiy_tilda
+phiz_tilda      = fact * phiz_tilda
+Fx_factor_tilda = fact * Fx_factor_tilda
+Fy_factor_tilda = fact * Fy_factor_tilda
+Fz_factor_tilda = fact * Fz_factor_tilda
+
+fact            = fact.flatten()
+
+M_tilda       = fact**2 * M_tilda
+K_tilda       = fact**2 * K_tilda
+C_tilda       = fact**2 * C_tilda
 
 #%% Save results
 
-np.savez(name+".npz", N=N, Nm=Nm, 
+np.savez("Data/"+name+".npz", N=N, Nm=Nm, 
          dim3_coupling=dim3_coupling, mn=M_tilda, kn=K_tilda, cn=C_tilda, 
-         wn=wn, x=x, y=y, z=z,
+         wn=wn_tilda, x=x, y=y, z=z,
          phinx=phix_tilda.T, phiny=phiy_tilda.T, phinz=phiz_tilda.T,
          Fx_fact=Fx_factor_tilda, Fy_fact=Fy_factor_tilda, 
          Fz_fact=Fz_factor_tilda)
