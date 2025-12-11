@@ -5,18 +5,17 @@ import matplotlib.pyplot as plt
 
 # Unités SI
 
+null_null = True
+
 L               = 0.205
 w               = 0.035
 h               = 0.010
-rho             = 750
-#rho             = 0
+rho             = 750 * int(not(null_null))
 beta            = 1/16 * (16 / 3 - 3.36 * h / w * (1 - 1/12 * h**4 / w**4))
 K               = beta * h**3 * w
 eta             = 0.01 
-E               = 13.3e9 * (1 + 1j * eta)
-#E               = 0
-G               = 0.93e9 * (1 + 1j * eta)
-#G               = 0
+E               = 13.3e9 * (1 + 1j * eta) * int(not(null_null))
+G               = 0.93e9 * (1 + 1j * eta) * int(not(null_null))
 Iz              = w * h**3 / 12
 Iy              = h * w**3 / 12
 J               = (w * h**3 + h * w**3) / 12
@@ -42,8 +41,8 @@ params = np.array((L,
                    G,
                    fric))
 
-Delta_x = 30e-3
-Delta_y = 10e-3
+Delta_x = 40e-3
+Delta_y = 20e-3
 
 f_max       = 5000
 f_res       = 1e-8
@@ -148,12 +147,17 @@ Fz_fact_flz[:,z==z.min()]   = phinz_flz[:,z==z.min()]
 
 # Normalization
 
-#fact        = 1 / np.abs(phin_flz).max(axis=1)[:,np.newaxis]
-fact        = 1 / np.sqrt(m_flz)[:,np.newaxis]
+fact = np.ones(N_flz)
+
+#fact               = 1 / np.abs(phin_flz).max(axis=1)
+fact[m_flz!=0]      = 1 / np.sqrt(m_flz[m_flz!=0])
+
+fact                = fact[:,np.newaxis]
 
 phinx_flz   = fact * phinx_flz
 phiny_flz   = fact * phiny_flz
 phinz_flz   = fact * phinz_flz
+phin_flz    = np.sqrt(phinx_flz**2 + phiny_flz**2 + phinz_flz**2)
 Fx_fact_flz = fact * Fx_fact_flz
 Fy_fact_flz = fact * Fy_fact_flz
 Fz_fact_flz = fact * Fz_fact_flz
@@ -224,12 +228,17 @@ Fz_fact_fly[:,z==z.min()]   = phinz_fly[:,z==z.min()]
 
 # Normalization
 
-# fact        = 1 / np.abs(phin_fly).max(axis=1)[:,np.newaxis]
-fact        = 1 / np.sqrt(m_fly)[:,np.newaxis]
+fact = np.ones(N_fly)
+
+# fact              = 1 / np.abs(phin_fly).max(axis=1)
+fact[m_fly!=0]      = 1 / np.sqrt(m_fly[m_fly!=0])
+
+fact                = fact[:,np.newaxis]
 
 phinx_fly   = fact * phinx_fly
 phiny_fly   = fact * phiny_fly
 phinz_fly   = fact * phinz_fly
+phin_fly    = np.sqrt(phinx_fly**2 + phiny_fly**2 + phinz_fly**2)
 Fx_fact_fly = fact * Fx_fact_fly
 Fy_fact_fly = fact * Fy_fact_fly
 Fz_fact_fly = fact * Fz_fact_fly
@@ -276,12 +285,17 @@ Fz_fact_to[:,z==z.min()]    = phinz_to[:,z==z.min()]
 
 # Normalization
 
-# fact        = 1 / np.abs(phin_to).max(axis=1)[:,np.newaxis]
-fact        = 1 / np.sqrt(m_to)[:,np.newaxis]
+fact = np.ones(N_to)
+
+# fact          = 1 / np.abs(phin_to).max(axis=1)
+fact[m_to!=0]   = 1 / np.sqrt(m_to[m_to!=0])
+
+fact                = fact[:,np.newaxis]
 
 phinx_to    = fact * phinx_to
 phiny_to    = fact * phiny_to
 phinz_to    = fact * phinz_to
+phin_to     = np.sqrt(phinx_to**2 + phiny_to**2 + phinz_to**2)
 Fx_fact_to  = fact * Fx_fact_to
 Fy_fact_to  = fact * Fy_fact_to
 Fz_fact_to  = fact * Fz_fact_to
@@ -323,12 +337,17 @@ Fz_fact_tr      = np.zeros((N_tr,Np))
 
 # Normalization
 
-# fact        = 1 / np.abs(phin_tr).max(axis=1)[:,np.newaxis]
-fact        = 1 / np.sqrt(m_tr)[:,np.newaxis]
+fact = np.ones(N_tr)
+
+# fact          = 1 / np.abs(phin_tr).max(axis=1)
+fact[m_tr!=0]   = 1 / np.sqrt(m_tr[m_tr!=0])
+
+fact                = fact[:,np.newaxis]
 
 phinx_tr    = fact * phinx_tr
 phiny_tr    = fact * phiny_tr
 phinz_tr    = fact * phinz_tr
+phin_tr     = np.sqrt(phinx_tr**2 + phiny_tr**2 + phinz_tr**2)
 Fx_fact_tr  = fact * Fx_fact_tr
 Fy_fact_tr  = fact * Fy_fact_tr
 Fz_fact_tr  = fact * Fz_fact_tr
@@ -341,11 +360,19 @@ c_tr        = fact**2 * c_tr
 
 #%% Corps rigide
 
+amplitude_ratio = 100
+
+phin_temp = np.concatenate((phin_to,
+                            phin_flz,
+                            phin_fly,
+                            phin_tr))
+
 # Translation en x
 
 phinx_tx    = np.ones((1,Np))
 phiny_tx    = np.zeros((1,Np))
 phinz_tx    = np.zeros((1,Np))
+phin_tx     = np.ones((1,Np))
 wn_tx       = np.array([0])
 m_tx        = np.array([w * h * L * rho])
 k_tx        = np.array([0])
@@ -362,7 +389,8 @@ Fz_fact_tx[:,z==z.min()]    = phinz_tx[:,z==z.min()]
 
 # Normalization
 
-fact        = 1 / m_tx[:,np.newaxis]
+# fact        = 1 / np.sqrt(m_tx)[:,np.newaxis]
+fact        = amplitude_ratio * np.abs(phin_temp).max(axis=1).max() / np.abs(phin_tx).max(axis=1)[:,np.newaxis]
 
 phinx_tx    = fact * phinx_tx
 phiny_tx    = fact * phiny_tx
@@ -370,14 +398,15 @@ phinz_tx    = fact * phinz_tx
 
 fact        = fact.flatten()
 
-m_tx        = fact * m_tx
-c_tx        = fact * c_tx
+m_tx        = fact**2 * m_tx
+c_tx        = fact**2 * c_tx
 
 # Translation en y
 
 phinx_ty    = np.zeros((1,Np))
 phiny_ty    = np.ones((1,Np))
 phinz_ty    = np.zeros((1,Np))
+phin_ty     = np.ones((1,Np))
 wn_ty       = np.array([0])
 m_ty        = np.array([w * h * L * rho])
 k_ty        = np.array([0])
@@ -394,7 +423,8 @@ Fz_fact_ty[:,z==z.min()]    = phinz_ty[:,z==z.min()]
 
 # Normalization
 
-fact        = 1 / m_ty[:,np.newaxis]
+# fact        = 1 / np.sqrt(m_ty)[:,np.newaxis]
+fact        = amplitude_ratio * np.abs(phin_temp).max(axis=1).max() / np.abs(phin_ty).max(axis=1)[:,np.newaxis]
 
 phinx_ty    = fact * phinx_ty
 phiny_ty    = fact * phiny_ty
@@ -402,14 +432,15 @@ phinz_ty    = fact * phinz_ty
 
 fact        = fact.flatten()
 
-m_ty        = fact * m_ty
-c_ty        = fact * c_ty
+m_ty        = fact**2 * m_ty
+c_ty        = fact**2 * c_ty
 
 # Translation en z
 
 phinx_tz    = np.zeros((1,Np))
 phiny_tz    = np.zeros((1,Np))
 phinz_tz    = np.ones((1,Np))
+phin_tz     = np.ones((1,Np))
 wn_tz       = np.array([0])
 m_tz        = np.array([w * h * L * rho])
 k_tz        = np.array([0])
@@ -426,7 +457,8 @@ Fz_fact_tz[:,z==z.min()]    = phinz_tz[:,z==z.min()]
 
 # Normalization
 
-fact        = 1 / m_tz[:,np.newaxis]
+# fact        = 1 / np.sqrt(m_tz)[:,np.newaxis]
+fact        = amplitude_ratio * np.abs(phin_temp).max(axis=1).max() / np.abs(phin_tz).max(axis=1)[:,np.newaxis]
 
 phinx_tz    = fact * phinx_tz
 phiny_tz    = fact * phiny_tz
@@ -434,8 +466,8 @@ phinz_tz    = fact * phinz_tz
 
 fact        = fact.flatten()
 
-m_tz        = fact * m_tz
-c_tz        = fact * c_tz
+m_tz        = fact**2 * m_tz
+c_tz        = fact**2 * c_tz
 
 # Rotation en x
 
@@ -459,8 +491,9 @@ Fz_fact_rx[:,z==z.min()]    = phinz_rx[:,z==z.min()]
 
 # Normalization
 
-# fact        = 1 / np.abs(phin_rx).max(axis=1)[:,np.newaxis]
-fact        = 1 / m_rx[:,np.newaxis]
+#fact        = 1 / np.abs(phin_rx).max(axis=1)[:,np.newaxis]
+#fact        = 1 / np.sqrt(m_rx)[:,np.newaxis]
+fact        = amplitude_ratio * np.abs(phin_temp).max(axis=1).max() / np.abs(phin_rx).max(axis=1)[:,np.newaxis]
 
 phinx_rx    = fact * phinx_rx
 phiny_rx    = fact * phiny_rx
@@ -468,8 +501,8 @@ phinz_rx    = fact * phinz_rx
 
 fact        = fact.flatten()
 
-m_rx        = fact * m_rx
-c_rx        = fact * c_rx
+m_rx        = fact**2 * m_rx
+c_rx        = fact**2 * c_rx
 
 # Rotation en y
 
@@ -493,8 +526,9 @@ Fz_fact_ry[:,z==z.min()]    = phinz_ry[:,z==z.min()]
 
 # Normalization
 
-# fact        = 1 / np.abs(phin_ry).max(axis=1)[:,np.newaxis]
-fact        = 1 / m_ry[:,np.newaxis]
+#fact        = 1 / np.abs(phin_ry).max(axis=1)[:,np.newaxis]
+#fact        = 1 / np.sqrt(m_ry)[:,np.newaxis]
+fact        = amplitude_ratio * np.abs(phin_temp).max(axis=1).max() / np.abs(phin_ry).max(axis=1)[:,np.newaxis]
 
 phinx_ry    = fact * phinx_ry
 phiny_ry    = fact * phiny_ry
@@ -502,8 +536,8 @@ phinz_ry    = fact * phinz_ry
 
 fact        = fact.flatten()
 
-m_ry        = fact * m_ry
-c_ry        = fact * c_ry
+m_ry        = fact**2 * m_ry
+c_ry        = fact**2 * c_ry
 
 # Rotation en z
 
@@ -526,8 +560,10 @@ Fz_fact_rz[:,z==z.max()]    = phinz_rz[:,z==z.max()]
 Fz_fact_rz[:,z==z.min()]    = phinz_rz[:,z==z.min()]
 
 # Normalization
-
-fact        = 1 / m_rz[:,np.newaxis]
+ 
+# fact        = 1 / np.abs(phin_rz).max(axis=1)[:,np.newaxis]
+# fact        = 1 / np.sqrt(m_rz)[:,np.newaxis]
+fact        = amplitude_ratio * np.abs(phin_temp).max(axis=1).max() / np.abs(phin_rz).max(axis=1)[:,np.newaxis]
 
 phinx_rz    = fact * phinx_rz
 phiny_rz    = fact * phiny_rz
@@ -535,8 +571,8 @@ phinz_rz    = fact * phinz_rz
 
 fact        = fact.flatten()
 
-m_rz        = fact * m_rz
-c_rz        = fact * c_rz
+m_rz        = fact**2 * m_rz
+c_rz        = fact**2 * c_rz
 
 #%% Base modale unifiée
 
@@ -686,7 +722,7 @@ plt.colorbar()
 
 # %% Save modal basis
 
-name = "Data/Bridge_modal_basis_Dx_"+ f"{(np.round(Delta_x*100,3)):.3f}" +"_Dy_"+\
+name = "Data/Bridge_"+ null_null * "Zero_Zero_"+"modal_basis_Dx_"+ f"{(np.round(Delta_x*100,3)):.3f}" +"_Dy_"+\
         f"{(np.round(Delta_y*100,3)):.3f}"+"_cm"
 
 np.savez(name, x=x, y=y, z=z, wn=wn, mn=mn, kn=kn, cn=cn, phinx=phinx, 

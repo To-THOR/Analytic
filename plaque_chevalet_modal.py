@@ -15,8 +15,8 @@ dim3_coupling   = True
 null            = False
 null_null       = False
 
-Dx = "3.417"
-Dy = "1.167"
+Dx = "4.100"
+Dy = "3.500"
 
 name = "Plaque_Chevalet_"+ null * "Zero_"+ null_null * "Zero_Zero_"+ "Modal_Dx_"+Dx+"_Dy_"+Dy+"_cm"+ \
         dim3_coupling * "_3D_coupled" 
@@ -161,14 +161,24 @@ N_s = A.shape[0]
 #%% Find subspace such that q = L alpha always satisfies A qdd = 0
 #   Then extract the coupled basis
 
-L       = null_space(A)
+L = null_space(A)
+
+# Restrain the plate modal coupling
+
+# for i in range(Nm_c,Nm):
+#     idx         = np.argmax(L[i])
+#     max_val     = L[i,idx] 
+#     L[i]        = np.zeros(Nm - N_s)
+#     L[i,idx]    = max_val
+
+# Modal basis computation
 
 Nm_tilda = L.shape[-1]
 
 M_tilda             = np.diag(L.T @ M @ L)
 C_tilda             = np.diag(L.T @ C @ L)
 K_tilda             = np.diag(L.T @ K @ L)
-wn_tilda            = np.zeros(Nm_tilda)  
+wn_tilda            = np.zeros(Nm_tilda)
 wn_tilda[M_tilda!=0]= np.sqrt(K_tilda[M_tilda!=0] / M_tilda[M_tilda!=0])
 phix_tilda          = phix @ L
 phiy_tilda          = phiy @ L
@@ -196,7 +206,12 @@ Fz_factor_tilda     = Fz_factor_tilda[:,idx]
 
 phi_tilda = np.sqrt(phix_tilda**2 + phiy_tilda**2 + phiz_tilda**2)
 
-fact        = 1 / np.abs(phi_tilda).max(axis=0)[np.newaxis]
+fact        = np.ones(Nm_tilda)
+
+# fact              = 1 / np.abs(phi_tilda).max(axis=0)
+fact[M_tilda!=0]    = 1 / np.sqrt(M_tilda[M_tilda!=0])
+
+fact                = fact[np.newaxis]
 
 phix_tilda      = fact * phix_tilda
 phiy_tilda      = fact * phiy_tilda

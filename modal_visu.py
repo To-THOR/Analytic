@@ -8,15 +8,15 @@ from scipy.io.wavfile import write
 
 #%%
 
-Dx = "3.417"
-Dy = "1.167"
+Dx = "4.100"
+Dy = "3.500"
 
 T   = "70"
 mu  = "380"
 
 coupled                 = True
 guitar                  = False
-system                  = "Bridge"
+system                  = "Plate"
 modal                   = True
 null                    = False
 null_null               = False

@@ -50,8 +50,8 @@ params = np.array((Lx,
                    Lb,
                    wb))
 
-Delta_x = 30e-3
-Delta_y = 10e-3
+Delta_x = 40e-3
+Delta_y = 20e-3
 
 f_max           = 5000
 # w_max       = 2 * np.pi * f_max
