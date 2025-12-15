@@ -159,9 +159,8 @@ else:
 N_s = A.shape[0]
 
 #%% Find subspace such that q = L alpha always satisfies A qdd = 0
-#   Then extract the coupled basis
 
-L = null_space(A)
+L_null = null_space(A)
 
 # Restrain the plate modal coupling
 
@@ -171,9 +170,31 @@ L = null_space(A)
 #     L[i]        = np.zeros(Nm - N_s)
 #     L[i,idx]    = max_val
 
-# Modal basis computation
+L = np.zeros((Nm, Nm_p))
+for i in range(Nm_p):
+    Axi     = phix[idx_coupl[:,0], :Nm_c]
+    Ayi     = phiy[idx_coupl[:,0], :Nm_c]
+    Azi     = phiz[idx_coupl[:,0], :Nm_c]
+    if dim3_coupling:
+        Ai = np.concatenate((Axi,Ayi,Azi),axis=0)
+    else:
+        Ai = Azi
+    bxi     = phix[idx_coupl[:,1], Nm_c+i]
+    byi     = phiy[idx_coupl[:,1], Nm_c+i]
+    bzi     = phiz[idx_coupl[:,1], Nm_c+i]
+    if dim3_coupling:
+        bi = np.concatenate((bxi,byi,bzi),axis=0)
+    else:
+        bi = bzi
+    
+    li_c = np.linalg.lstsq(Ai, bi)[0]
+    li_p    = np.zeros(Nm_p)
+    li_p[i] = 1 
+    L[:,i] = np.concatenate((li_c, li_p))
 
 Nm_tilda = L.shape[-1]
+
+#%% Compute de coupled modal basis
 
 M_tilda             = np.diag(L.T @ M @ L)
 C_tilda             = np.diag(L.T @ C @ L)

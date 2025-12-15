@@ -14,7 +14,7 @@ Dy = "3.500"
 T   = "70"
 mu  = "380"
 
-coupled                 = True
+coupled                 = False
 guitar                  = False
 system                  = "Plate"
 modal                   = True
@@ -61,7 +61,7 @@ phiny = zscale * phiny / np.abs(phin).max(axis=-1)[:,np.newaxis]
 phinz = zscale * phinz / np.abs(phin).max(axis=-1)[:,np.newaxis]
 phin  = np.sqrt(phinx**2 + phiny**2 + phinz**2)
 
-idx_mode    = 0
+idx_mode    = 3
 N           = 25
 
 T   = 2 *np.pi 
