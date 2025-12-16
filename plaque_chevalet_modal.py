@@ -15,7 +15,7 @@ dim3_coupling   = True
 null            = False
 null_null       = False
 
-Dx = "4.100"
+Dx = "1.025"
 Dy = "3.500"
 
 name = "Plaque_Chevalet_"+ null * "Zero_"+ null_null * "Zero_Zero_"+ "Modal_Dx_"+Dx+"_Dy_"+Dy+"_cm"+ \
@@ -115,6 +115,22 @@ ax.set(xlim=(x.min()*0.9, x.max()*1.1),
        zlim=(-0.1, 0.1))
 ax.set_aspect('equal')
 ax.axis('off')
+
+#%% Check modal basis' orthogonality
+
+ORTHO_MAT   = np.zeros((Nm,Nm))
+
+for i in range(Nm):
+    for j in range(i,Nm):
+        tempx           = (phix[:,i] * phix[:,j]).sum()
+        tempy           = (phiy[:,i] * phiy[:,j]).sum()
+        tempz           = (phiz[:,i] * phiz[:,j]).sum()
+        temp            = np.sqrt(tempx**2 + tempy**2 + tempz**2) 
+        ORTHO_MAT[i,j]  = temp
+        ORTHO_MAT[j,i]  = temp
+
+plt.matshow(np.log10(np.abs(ORTHO_MAT) / np.abs(ORTHO_MAT).max()), vmin=-20, vmax=0)
+plt.colorbar()
 
 #%% Compute coupling surface
 
@@ -253,6 +269,6 @@ np.savez("Data/"+name+".npz", N=N, Nm=Nm,
          dim3_coupling=dim3_coupling, mn=M_tilda, kn=K_tilda, cn=C_tilda, 
          wn=wn_tilda, x=x, y=y, z=z,
          phinx=phix_tilda.T, phiny=phiy_tilda.T, phinz=phiz_tilda.T,
-         Fx_fact=Fx_factor_tilda, Fy_fact=Fy_factor_tilda, 
-         Fz_fact=Fz_factor_tilda)
+         Fx_fact=Fx_factor_tilda.T, Fy_fact=Fy_factor_tilda.T, 
+         Fz_fact=Fz_factor_tilda.T)
 print("Simulation saved as " + name + ".npz")

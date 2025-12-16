@@ -5,11 +5,12 @@ import matplotlib.pyplot as plt
 
 # Unités SI
 
-null_null = True
+null_null = False
 
 L               = 0.205
 w               = 0.035
 h               = 0.010
+l_handle        = 0.05 
 rho             = 750 * int(not(null_null))
 beta            = 1/16 * (16 / 3 - 3.36 * h / w * (1 - 1/12 * h**4 / w**4))
 K               = beta * h**3 * w
@@ -41,8 +42,8 @@ params = np.array((L,
                    G,
                    fric))
 
-Delta_x = 40e-3
-Delta_y = 20e-3
+Delta_x = 10e-3
+Delta_y = 30e-3
 
 f_max       = 5000
 f_res       = 1e-8
@@ -69,11 +70,10 @@ Nx, Ny, Nz = np.unique(x).size, np.unique(y).size, np.unique(z).size
 
 Nx_other = 20
 Ny_other = 5
-Nz_other = 3
 
 x_other   = np.linspace(0, L, Nx_other)
 y_other   = np.linspace(-w/2, w/2, Ny_other)
-z_other   = np.linspace(-h*0.49, h/2, Nz_other) 
+z_other   = np.array([0]) 
 
 X,Y,Z = np.meshgrid(x_other,y_other,z_other)
 
@@ -81,11 +81,16 @@ x_other = X.flatten()
 y_other = Y.flatten()
 z_other = Z.flatten()
 
-x = np.concatenate((x,x_other))
-y = np.concatenate((y,y_other))
-z = np.concatenate((z,z_other))
 
-Np          = Nx*Ny*Nz + Nx_other*Ny_other*Nz_other 
+x_strings = (L - w)/2 + l_handle * np.arange(0,6) / 5
+y_strings = -1/4 * w * np.ones(6)
+z_strings = h/2 * np.ones(6)
+
+x = np.concatenate((x_strings, x, x_other))
+y = np.concatenate((y_strings, y, y_other))
+z = np.concatenate((z_strings, z, z_other))
+
+Np = x.size 
 
 #%% Flexion en z
 
@@ -360,7 +365,7 @@ c_tr        = fact**2 * c_tr
 
 #%% Corps rigide
 
-amplitude_ratio = 100
+amplitude_ratio = 1000
 
 phin_temp = np.concatenate((phin_to,
                             phin_flz,
@@ -582,10 +587,11 @@ wn = np.concatenate((wn_tx,
                      wn_rx,
                      wn_ry,
                      wn_rz,
-                     wn_to,
-                     wn_flz,
-                     wn_fly,
-                     wn_tr))
+                      #wn_to,
+                      wn_flz,
+                     # wn_fly,
+                     # wn_tr,
+                     ))
 
 mn = np.concatenate((m_tx,
                      m_ty,
@@ -593,10 +599,11 @@ mn = np.concatenate((m_tx,
                      m_rx,
                      m_ry,
                      m_rz,
-                     m_to,
-                     m_flz,
-                     m_fly,
-                     m_tr))
+                      #m_to,
+                      m_flz,
+                     # m_fly,
+                     # m_tr,
+                     ))
 
 cn = np.concatenate((c_tx,
                      c_ty,
@@ -604,10 +611,11 @@ cn = np.concatenate((c_tx,
                      c_rx,
                      c_ry,
                      c_rz,
-                     c_to,
-                     c_flz,
-                     c_fly,
-                     c_tr)) 
+                      #c_to,
+                      c_flz,
+                     # c_fly,
+                     # c_tr,
+                     )) 
 
 kn = np.concatenate((k_tx,
                      k_ty,
@@ -615,10 +623,11 @@ kn = np.concatenate((k_tx,
                      k_rx,
                      k_ry,
                      k_rz,
-                     k_to,
-                     k_flz,
-                     k_fly,
-                     k_tr))
+                      #k_to,
+                      k_flz,
+                     # k_fly,
+                     # k_tr,
+                     ))
 
 phinx = np.concatenate((phinx_tx,
                         phinx_ty,
@@ -626,10 +635,11 @@ phinx = np.concatenate((phinx_tx,
                         phinx_rx,
                         phinx_ry,
                         phinx_rz,
-                        phinx_to,
+                        #phinx_to,
                         phinx_flz,
-                        phinx_fly,
-                        phinx_tr))
+                        #phinx_fly,
+                        # phinx_tr,
+                        ))
 
 phiny = np.concatenate((phiny_tx,
                         phiny_ty,
@@ -637,10 +647,11 @@ phiny = np.concatenate((phiny_tx,
                         phiny_rx,
                         phiny_ry,
                         phiny_rz,
-                        phiny_to,
+                        #phiny_to,
                         phiny_flz,
-                        phiny_fly,
-                        phiny_tr))
+                        #phiny_fly,
+                        # phiny_tr,
+                        ))
 
 phinz = np.concatenate((phinz_tx,
                         phinz_ty,
@@ -648,10 +659,11 @@ phinz = np.concatenate((phinz_tx,
                         phinz_rx,
                         phinz_ry,
                         phinz_rz,
-                        phinz_to,
+                        #phinz_to,
                         phinz_flz,
-                        phinz_fly,
-                        phinz_tr))
+                        #phinz_fly,
+                        # phinz_tr,
+                        ))
 
 Fx_fact = np.concatenate((Fx_fact_tx,
                           Fx_fact_ty,
@@ -659,10 +671,11 @@ Fx_fact = np.concatenate((Fx_fact_tx,
                           Fx_fact_rx,
                           Fx_fact_ry,
                           Fx_fact_rz,
-                          Fx_fact_to,
-                          Fx_fact_flz,
-                          Fx_fact_fly,
-                          Fx_fact_tr))
+                           #Fx_fact_to,
+                           Fx_fact_flz,
+                          # Fx_fact_fly,
+                          # Fx_fact_tr,
+                          ))
 
 Fy_fact = np.concatenate((Fy_fact_tx,
                           Fy_fact_ty,
@@ -670,10 +683,11 @@ Fy_fact = np.concatenate((Fy_fact_tx,
                           Fy_fact_rx,
                           Fy_fact_ry,
                           Fy_fact_rz,
-                          Fy_fact_to,
-                          Fy_fact_flz,
-                          Fy_fact_fly,
-                          Fy_fact_tr))
+                           #Fy_fact_to,
+                           Fy_fact_flz,
+                          # Fy_fact_fly,
+                          # Fy_fact_tr,
+                          ))
 
 Fz_fact = np.concatenate((Fz_fact_tx,
                           Fz_fact_ty,
@@ -681,10 +695,11 @@ Fz_fact = np.concatenate((Fz_fact_tx,
                           Fz_fact_rx,
                           Fz_fact_ry,
                           Fz_fact_rz,
-                          Fz_fact_to,
-                          Fz_fact_flz,
-                          Fy_fact_fly,
-                          Fz_fact_tr))
+                           #Fz_fact_to,
+                           Fz_fact_flz,
+                           #Fy_fact_fly,
+                          # Fz_fact_tr,
+                          ))
 
 idx_sort = wn.argsort()
 

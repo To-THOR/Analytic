@@ -8,7 +8,7 @@ from scipy.io.wavfile import write
 
 #%%
 
-Dx = "4.100"
+Dx = "1.025"
 Dy = "3.500"
 
 T   = "70"
@@ -61,7 +61,7 @@ phiny = zscale * phiny / np.abs(phin).max(axis=-1)[:,np.newaxis]
 phinz = zscale * phinz / np.abs(phin).max(axis=-1)[:,np.newaxis]
 phin  = np.sqrt(phinx**2 + phiny**2 + phinz**2)
 
-idx_mode    = 3
+idx_mode    = 0
 N           = 25
 
 T   = 2 *np.pi 

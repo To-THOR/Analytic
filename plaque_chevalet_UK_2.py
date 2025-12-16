@@ -277,7 +277,7 @@ rate        = int(np.round(Fe / undersample))
 scaled      = np.asarray(np.real(zd_phys[::undersample]), dtype=np.float32)
 scaled      = scaled / ( np.max(np.abs(scaled[100:])) +  (np.max(np.abs(scaled))==0) ) 
 scaled      = scaled - np.mean(scaled) 
-write(name+".wav", rate, np.pad(scaled[100:], (int(1*rate),0)))
+write("Audio/" + name + ".wav", rate, np.pad(scaled[100:], (int(1*rate),0)))
 
 #%%
 

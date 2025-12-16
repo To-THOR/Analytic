@@ -3,60 +3,86 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-Dx = "0.5"
-Dy = "0.5"
-vert = True
-name = "Plate_modal_basis_Dx_" + Dx + "_Dy_" + Dy + vert * "_cm_vert.npz"
-file = np.load(name)
 
-X           = file['X']
-Y           = file['Y']
-Z           = file['Z']
-wn          = file['wn']
-mn          = file['mn']
-kn          = file['kn']
-cn          = file['cn']
+#%%
+
+Dx = "1.025"
+Dy = "3.500"
+
+T   = "70"
+mu  = "380"
+
+coupled                 = True
+guitar                  = False
+system                  = "Plate"
+modal                   = True
+null                    = False
+null_null               = False
+dim3_coupling           = True
+constraint_correction   = False
+
+if system != "String":
+    if coupled:
+        name = "Plaque_Chevalet" + null * "_Zero" + null_null * "_Zero_Zero"  + + modal * "_Modal" + "_Dx_" + Dx + "_Dy_" + Dy + "_cm"+ \
+                dim3_coupling * "_3D_coupled" + (not modal) * constraint_correction * "_corrected"
+    elif guitar:
+        name = "Guitar_modal_basis"
+    else:
+        name = system + "_modal_basis_Dx_" + Dx + "_Dy_" + Dy + "_cm"
+else:
+     name = system + "_modal_basis_Dy_" + Dy + "_cm" + "_T_" + T + "_N_mu_" + mu + "_mg.m-1"     
+
+name = name
+file = np.load("Data/" + name + ".npz" )
+print("File " + name + ".npz" + " opened.")
+
+x           = file['x']
+y           = file['y']
+z           = file['z']
 phinx       = file['phinx']
 phiny       = file['phiny']
 phinz       = file['phinz']
-F_factor    = file['F_factor']
+wn          = file['wn']
+mn          = file["mn"]
+cn          = file["cn"]
+kn          = file["kn"]
+Fx_fact     = file["Fx_fact"]
+Fy_fact     = file["Fy_fact"]
+Fz_fact     = file["Fz_fact"] 
 
-Nm          = wn.size
-Ny, Nx, Nz  = X.shape
-Dx          = np.abs(X[0,1,0] - X[0,0,0]) 
-Dy          = np.abs(Y[1,0,0] - Y[0,0,0])
-Dz          = np.abs(Z[0,0,1] - Z[0,0,0])
+phin    = np.sqrt(phinx**2 + phiny**2 + phinz**2)
 
-fmax    = 5e3 
-df      = 1 
-f       = np.arange(10,fmax,df) 
-w       = 2 * np.pi * f 
-Nf      = f.size 
+Nm      = mn.size
 
-if name[:5] == "Plate":
-    pos_ext         = np.array([X.max()*0.5, Y.max()*0.6])
-    idx_ext         = (int(np.round(pos_ext[1]/Dy)), 
-                       int(np.round(pos_ext[0]/Dx)))
-else:
-    pos_ext         = np.array([0, 0])
-    idx_ext         = (int(np.round(pos_ext[1]/Dy)), 
-                       int(np.round(pos_ext[0]/Dx)))
-f_ext           = np.zeros((Ny,Nx))
-f_ext[idx_ext]  = 1
-idx_z           = Z.argmax() 
+#%%
 
-FRF = np.zeros(Nf)
+Lx  = x.max() - x.min()
+Ly  = y.max() - y.min()
 
-for n in range(Nm):
-    F_exc   = np.sum(F_factor[n] * f_ext) * Dx * Dy * phinz[n,idx_ext[0],idx_ext[1],idx_z] 
-    FRF     = FRF +  F_exc / (-w**2 * mn[n] + w * 1j * cn[n]+ kn[n])
+idx_exc = np.argmin((x - Lx * 0.1)**2 + (y - Ly * 0.1)**2)
 
+Fe      = 5e3
+Te      = 1/Fe
+df      = 0.5
+freq    = np.arange(0,Fe,df)
+w       = 2*np.pi*freq
+Nf      = freq.size 
+Q       = Fz_fact[:,idx_exc] / (-mn[np.newaxis] * w[:,np.newaxis]**2 + \
+                                   1j * w[:,np.newaxis] * cn[np.newaxis] + \
+                                   kn[np.newaxis])
+    
+FRF_z   = (phinz[:,idx_exc][np.newaxis] * Q).sum(axis=1)
+ 
+#%%
 
-FRF_dB = 20 * np.log10(np.abs(FRF) / np.abs(FRF).max()) 
+FRF_z_dB = 20 * np.log10(np.abs(FRF_z) / np.abs(FRF_z).max())
+
 plt.figure()
-plt.plot(f, FRF_dB)
-plt.xlabel("Fréquence (Hz)", fontsize=20)
-plt.ylabel("FRF (dB)", fontsize=20)
-plt.xticks(fontsize=15)
-plt.yticks(fontsize=15)
-plt.show()
+plt.plot(freq, FRF_z_dB)
+plt.xlabel("Fréquence (Hz)")
+plt.ylabel("FRF (dB)")
+
+#%%
+
+np.savez("FRF/"+name+"_FRF_loc.npz", freq=freq, FRF=FRF_z)
+print("Saved as FRF/"+name+"_FRF_loc.npz")

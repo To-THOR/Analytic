@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 
 # Données issues de Woodhouse (2012)
 
-string_chosen   = "E4" 
+string_chosen   = "E2" 
 
 string_freqs    = {"E4"  :329.6,
                    "B3" : 246.9,
@@ -123,8 +123,8 @@ phin_flz    = np.sqrt(phinx_flz**2 + phiny_flz**2 + phinz_flz**2)
 etan_flz    = (T * (etaF + etaA / wn_flz) + EI * etaB * kappan_flz**2) / \
     (T + EI * kappan_flz**2) 
 
-m_flz       = mu * L / 2
-k_flz       = T * kappan_flz**2 * L / 2
+m_flz       = mu * L / 2 * np.ones(n.size)
+k_flz       = T * kappan_flz**2 * L / 2 
 k_flz       = k_flz * (1 + 1j * etan_flz) 
 c_flz       = np.imag(k_flz) / np.real(wn_flz)
 k_flz       = np.real(k_flz)
@@ -135,7 +135,9 @@ Fz_fact_flz = phinz_flz
 
 # Normalization
 
-fact        = 1 / np.abs(phin_flz).max(axis=1)[:,np.newaxis]
+#fact        = 1 / np.abs(phin_flz).max(axis=1)
+fact        = 1 / np.sqrt(m_flz)
+fact        = fact[:,np.newaxis] 
 
 phinx_flz   = fact * phinx_flz
 phiny_flz   = fact * phiny_flz
@@ -170,7 +172,7 @@ phin_flx    = np.sqrt(phinx_flx**2 + phiny_flx**2 + phinz_flx**2)
 etan_flx    = (T * (etaF + etaA / wn_flx) + EI * etaB * kappan_flx**2) / \
     (T + EI * kappan_flx**2) 
 
-m_flx       = mu * L / 2
+m_flx       = mu * L / 2 * np.ones(n.size)
 k_flx       = T * kappan_flx**2 * L / 2
 k_flx       = k_flx * (1 + 1j * etan_flx) 
 c_flx       = np.imag(k_flx) / np.real(wn_flx)
@@ -182,7 +184,9 @@ Fz_fact_flx = np.zeros((Nm_flx, Np))
 
 # Normalization
 
-fact        = 1 / np.abs(phin_flx).max(axis=1)[:,np.newaxis]
+# fact        = 1 / np.abs(phin_flx).max(axis=1)
+fact        = 1 / np.sqrt(m_flx)
+fact        = fact[:,np.newaxis]
 
 phinx_flx   = fact * phinx_flx
 phiny_flx   = fact * phiny_flx
@@ -338,10 +342,10 @@ plt.colorbar()
 
 # %% Save modal basis
 
-name = "String_modal_basis_Dy_"+ f"{(np.round(Delta_y*100,3)):.3f}" +"_cm_T_"+\
+name = "String_modal_basis_Dy_"+ string_chosen + f"_{(np.round(Delta_y*100,3)):.3f}" +"_cm_T_"+\
         f"{(np.round(T,0)):.0f}"+"_N_mu_"+f"{(np.round(mu*1e6,0)):.0f}"+"_mg.m-1"
 
-np.savez(name, x=x, y=y, z=z, wn=wn, mn=mn, kn=kn, cn=cn, phinx=phinx, 
+np.savez("Data/"+name, x=x, y=y, z=z, wn=wn, mn=mn, kn=kn, cn=cn, phinx=phinx, 
          phiny=phiny, phinz=phinz, Fx_fact=Fx_fact, Fy_fact=Fy_fact, 
          Fz_fact=Fz_fact, params_names=params_names, params=params)
 

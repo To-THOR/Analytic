@@ -4,23 +4,21 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import matplotlib.animation as animation
-from scipy.signal import ShortTimeFFT
+#from scipy.signal import ShortTimeFFT
 import scipy.signal as sgn
 from scipy.signal import find_peaks
 
 #%%
-         
 
 dim3_coupling           = True
 constraint_correction   = True
 
-Dx = "2.050"
-Dy = "3.500"
+Dy = "0.02031"
 
-name = "Plaque_Chevalet_Zero_Dx_"+Dx+"_Dy_"+Dy+"_cm"+ \
+name = "Corps_Cordes_Dy_" + Dy + "_cm"+ \
         dim3_coupling * "_3D_coupled" + constraint_correction * "_corrected"
 
-file = np.load(name + ".npz")
+file = np.load("Data/" + name + ".npz")
 
 N                   = int(file["N"])
 Nm                  = int(file["Nm"])
@@ -56,7 +54,7 @@ N_t = t.size
 
 #%% Check results
 
-idx_mode = 50
+idx_mode = 0
 
 plt.figure()
 plt.plot(t, np.real(q[idx_mode]))    
@@ -178,7 +176,7 @@ print("FRF saved as " + FRF_name)
 
 #%% Operational deform
 
-mode_idx        = 0 
+mode_idx        = 2
 mode_freq_idx   = peaks_idx[mode_idx]
 
 N_anim  = 25
@@ -234,21 +232,3 @@ ani = animation.FuncAnimation(fig=fig, func=update, frames=N_anim, interval=1)
 ani_name = "Animations"+name+"_ope_deform_"+str(mode_idx)+".gif"
 ani.save(ani_name, writer="pillow")
 print("Animation saved as " + ani_name)
-
-#%% Save all ope deforms
-
-N_peaks = peaks_idx.size
-
-X_op    = np.zeros((N_peaks, N), dtype=complex)
-Y_op    = np.zeros((N_peaks, N), dtype=complex)
-Z_op    = np.zeros((N_peaks, N), dtype=complex)
-
-for i in range(N_peaks):
-    Z_op[i] = phiz @ Q[:,peaks_idx[i]]
-    X_op[i] = phix @ Q[:,peaks_idx[i]]  
-    Y_op[i] = phiy @ Q[:,peaks_idx[i]]  
-
-np.savez("Data"+name+"_ope_deform.npz", x=x, y=y, z=z, freq=peaks_freq,\
-        X_op=X_op, Y_op=Y_op, Z_op=Z_op)
-    
-print("Operational deforms saved as " + name + "_ope_deform.npz")
