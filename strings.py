@@ -67,6 +67,8 @@ etaF            = string_etaF[string_chosen]
 etaB            = string_etaB[string_chosen]
 etaA            = string_etaA[string_chosen]
 EI              = string_EI[string_chosen]
+I               = np.pi * D**4 / 64
+E               = EI / I
 
 params_names = np.array(("L",
                          "T",
@@ -135,22 +137,24 @@ Fz_fact_flz = phinz_flz
 
 # Normalization
 
-#fact        = 1 / np.abs(phin_flz).max(axis=1)
-fact        = 1 / np.sqrt(m_flz)
-fact        = fact[:,np.newaxis] 
+# fact_flz        = 1 / np.abs(phin_flz).max(axis=1)
+# fact_flz        = 1 / np.sqrt(m_flz)
+fact_flz        = np.ones(Nm_flz) 
 
-phinx_flz   = fact * phinx_flz
-phiny_flz   = fact * phiny_flz
-phinz_flz   = fact * phinz_flz
-Fx_fact_flz = fact * Fx_fact_flz
-Fy_fact_flz = fact * Fy_fact_flz
-Fz_fact_flz = fact * Fz_fact_flz
+fact_flz        = fact_flz[:,np.newaxis] 
 
-fact        = fact.flatten()
+phinx_flz   = fact_flz * phinx_flz
+phiny_flz   = fact_flz * phiny_flz
+phinz_flz   = fact_flz * phinz_flz
+Fx_fact_flz = fact_flz * Fx_fact_flz
+Fy_fact_flz = fact_flz * Fy_fact_flz
+Fz_fact_flz = fact_flz * Fz_fact_flz
 
-m_flz       = fact**2 * m_flz
-k_flz       = fact**2 * k_flz
-c_flz       = fact**2 * c_flz
+fact_flz        = fact_flz.flatten()
+
+m_flz       = fact_flz**2 * m_flz
+k_flz       = fact_flz**2 * k_flz
+c_flz       = fact_flz**2 * c_flz
 
 #%% Flexion en x
 
@@ -184,22 +188,24 @@ Fz_fact_flx = np.zeros((Nm_flx, Np))
 
 # Normalization
 
-# fact        = 1 / np.abs(phin_flx).max(axis=1)
-fact        = 1 / np.sqrt(m_flx)
-fact        = fact[:,np.newaxis]
+# fact_flx        = 1 / np.abs(phin_flx).max(axis=1)
+#fact_flx        = 1 / np.sqrt(m_flx)
+fact_flx        = np.ones(Nm_flx) 
 
-phinx_flx   = fact * phinx_flx
-phiny_flx   = fact * phiny_flx
-phinz_flx   = fact * phinz_flx
-Fx_fact_flx = fact * Fx_fact_flx
-Fy_fact_flx = fact * Fy_fact_flx
-Fz_fact_flx = fact * Fz_fact_flx
+fact_flx        = fact_flx[:,np.newaxis]
 
-fact        = fact.flatten()
+phinx_flx   = fact_flx * phinx_flx
+phiny_flx   = fact_flx * phiny_flx
+phinz_flx   = fact_flx * phinz_flx
+Fx_fact_flx = fact_flx * Fx_fact_flx
+Fy_fact_flx = fact_flx * Fy_fact_flx
+Fz_fact_flx = fact_flx * Fz_fact_flx
 
-m_flx       = fact**2 * m_flx
-k_flx       = fact**2 * k_flx
-c_flx       = fact**2 * c_flx
+fact_flx    = fact_flx.flatten()
+
+m_flx       = fact_flx**2 * m_flx
+k_flx       = fact_flx**2 * k_flx
+c_flx       = fact_flx**2 * c_flx
 
 #%% Corps rigide
 
@@ -309,6 +315,21 @@ Fz_fact = np.concatenate((#Fz_fact_rx,
                           Fz_fact_flx,
                           Fz_fact_flz))
 
+#%% Nonlinear factor
+
+Nm = wn.size
+
+f_nl = np.zeros((Nm, Nm))
+f_nl[:Nm_flx,:Nm_flx] = - fact_flx[:,np.newaxis]**2 * kappan_flx[:,np.newaxis]**2 * E * \
+    (np.pi * D**2 / 4) * L / 8 * (fact_flx[np.newaxis] * kappan_flx[np.newaxis]**2)
+f_nl[:Nm_flx,Nm_flx:] = - fact_flx[:,np.newaxis]**2 * kappan_flx[:,np.newaxis]**2 * E * \
+    (np.pi * D**2 / 4) * L / 8 * (fact_flz[np.newaxis]**2 * kappan_flz[np.newaxis]**2)
+f_nl[Nm_flx:,:Nm_flx] = - fact_flz[:,np.newaxis]**2 * kappan_flz[:,np.newaxis]**2 * E * \
+    (np.pi * D**2 / 4) * L / 8 * (fact_flx[np.newaxis] * kappan_flx[np.newaxis]**2)
+f_nl[Nm_flx:,Nm_flx:] = - fact_flx[:,np.newaxis]**2 * kappan_flx[:,np.newaxis]**2 * E * \
+    (np.pi * D**2 / 4) * L / 8 * (fact_flz[np.newaxis]**2 * kappan_flz[np.newaxis]**2)
+
+#%% Sort
 idx_sort = wn.argsort()
 
 wn          = wn[idx_sort]
@@ -321,6 +342,7 @@ phinz       = phinz[idx_sort]
 Fx_fact     = Fx_fact[idx_sort]
 Fy_fact     = Fy_fact[idx_sort]
 Fz_fact     = Fz_fact[idx_sort]
+f_nl        = f_nl[idx_sort][:,idx_sort]
 
 phin    = np.sqrt(phinx**2 + phiny**2 + phinz**2) 
 
@@ -342,11 +364,11 @@ plt.colorbar()
 
 # %% Save modal basis
 
-name = "String_modal_basis_Dy_"+ string_chosen + f"_{(np.round(Delta_y*100,3)):.3f}" +"_cm_T_"+\
+name = "String_modal_basis_" + string_chosen + "_Dy_" + f"{(np.round(Delta_y*100,3)):.3f}" +"_cm_T_"+\
         f"{(np.round(T,0)):.0f}"+"_N_mu_"+f"{(np.round(mu*1e6,0)):.0f}"+"_mg.m-1"
 
 np.savez("Data/"+name, x=x, y=y, z=z, wn=wn, mn=mn, kn=kn, cn=cn, phinx=phinx, 
          phiny=phiny, phinz=phinz, Fx_fact=Fx_fact, Fy_fact=Fy_fact, 
-         Fz_fact=Fz_fact, params_names=params_names, params=params)
+         Fz_fact=Fz_fact, f_nl=f_nl, params_names=params_names, params=params)
 
 print("Saved as " + name)

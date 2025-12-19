@@ -12,13 +12,16 @@ from scipy.signal import find_peaks
 
 dim3_coupling           = True
 constraint_correction   = True
+T                       = 1 
 
 Dy = "0.02031"
 
 name = "Corps_Cordes_Dy_" + Dy + "_cm"+ \
-        dim3_coupling * "_3D_coupled" + constraint_correction * "_corrected"
+        dim3_coupling * "_3D_coupled" + constraint_correction * "_corrected_T_" + str(T) + "_s"
 
 file = np.load("Data/" + name + ".npz")
+
+print("Loaded " + name)
 
 N                   = int(file["N"])
 Nm                  = int(file["Nm"])
@@ -71,14 +74,26 @@ plt.plot(t, F_c[idx_mode].real)
 plt.xlabel("t (s)")
 plt.ylabel("Fc(t) for mode n°"+str(idx_mode))
 
-z_phys      = (phiz[idx_exc,:] @ q)
-zd_phys     = (phiz[idx_exc,:] @ qd)
-zdd_phys    = (phiz[idx_exc,:] @ qdd)
+z_phys      = (phiz[0,:] @ q)
+zd_phys     = (phiz[0,:] @ qd)
+zdd_phys    = (phiz[0,:] @ qdd)
+xdd_phys    = (phix[0,:] @ qdd)
 
 plt.figure()
-plt.plot(t, np.real(z_phys))
-plt.xlabel("t (s)")
-plt.ylabel("z(t)")
+plt.plot(t, np.real(zdd_phys))
+plt.xlabel("t (s)", size=25)
+plt.ylabel("m/s2", size=25)
+plt.title("Accélération verticale au chevalet", size=30)
+plt.xticks(size=15)
+plt.yticks(size=15)
+
+plt.figure()
+plt.plot(t, np.real(xdd_phys))
+plt.xlabel("t (s)", size=25)
+plt.ylabel("m/s2", size=25)
+plt.title("Accélération transverse au chevalet", size=30)
+plt.xticks(size=15)
+plt.yticks(size=15)
 
 plt.figure()
 plt.plot(t, np.real(const_violation))
@@ -91,6 +106,7 @@ Fext_freq       = np.fft.rfft(F_ext[idx_mode].real)
 z_phys_freq     = np.fft.rfft(z_phys.real)
 zd_phys_freq    = np.fft.rfft(zd_phys.real)
 zdd_phys_freq   = np.fft.rfft(zdd_phys.real)
+xdd_phys_freq   = np.fft.rfft(xdd_phys.real)
 freq            = np.fft.rfftfreq(N_t, Te)
 
 freq_idx        = freq < 5000
@@ -138,6 +154,7 @@ plt.plot(freq, sum_FRF_Z_dB)
 plt.scatter(peaks_freq, peaks_FRF_Z, color='r')
 plt.xlabel("f (Hz)")
 plt.ylabel("Sum FRF Z (dB)")
+plt.title("Accélération au chevalet", size=30)
 
 plt.figure()
 plt.plot(freq, sum_FRF_Zdd_dB)
@@ -158,11 +175,19 @@ plt.scatter(peaks_freq, peaks_z, color='r')
 plt.xlabel("f (Hz)")
 plt.ylabel("z (dB)")
 
+
+f_harmo = 82.4 * np.arange(1,10)
+
 plt.figure()
 plt.plot(freq, zdd_phys_freq_dB)
+for f_plot in f_harmo:
+    plt.axvline(f_plot, color='r', linestyle='--')
 plt.scatter(peaks_freq, peaks_zdd, color='r')
-plt.xlabel("f (Hz)")
-plt.ylabel("zdd (dB)")
+plt.xlabel("f (Hz)", size=25)
+plt.ylabel("dB", size=25)
+plt.title("Accélération au chevalet", size=30)
+plt.xticks(size=15)
+plt.yticks(size=15)
 
 #%% Save sum-FRF and FRF at excitation
 
@@ -176,7 +201,7 @@ print("FRF saved as " + FRF_name)
 
 #%% Operational deform
 
-mode_idx        = 2
+mode_idx        = 0 
 mode_freq_idx   = peaks_idx[mode_idx]
 
 N_anim  = 25

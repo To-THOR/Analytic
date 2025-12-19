@@ -63,7 +63,7 @@ modal                   = True
 null                    = False
 null_null               = False
 
-name = "String_modal_basis_Dy_"+ string_chosen + f"_{(np.round(Dy*100,3)):.3f}" +"_cm_T_"+\
+name = "String_modal_basis_" + string_chosen + "_Dy_" + f"{(np.round(Dy*100,3)):.3f}" +"_cm_T_"+\
         f"{(np.round(T,0)):.0f}"+"_N_mu_"+f"{(np.round(mu*1e6,0)):.0f}"+"_mg.m-1"
 
 name    = name
@@ -127,6 +127,7 @@ phinz_s         = file_s['phinz']
 Fx_factor_s     = file_s['Fx_fact']
 Fy_factor_s     = file_s['Fy_fact']
 Fz_factor_s     = file_s['Fz_fact']
+f_nl_s          = file_s['f_nl']
 
 idx = wn_s < W_max
 
@@ -140,6 +141,7 @@ phinz_s     = phinz_s[idx]
 Fx_factor_s = Fx_factor_s[idx]
 Fy_factor_s = Fy_factor_s[idx]
 Fz_factor_s = Fz_factor_s[idx]
+f_nl_s      = f_nl_s[idx][:,idx] 
 
 
 Nm_s            = wn_s.size
@@ -171,6 +173,8 @@ phiz[N_b:,Nm_b:]    = phinz_s.T
 Fx_factor           = np.concatenate((np.pad(Fx_factor_b.T, ((0,N_s), (0,0))), np.pad(Fx_factor_s.T, ((N_b,0),(0,0)))), axis=1)
 Fy_factor           = np.concatenate((np.pad(Fy_factor_b.T, ((0,N_s), (0,0))), np.pad(Fy_factor_s.T, ((N_b,0),(0,0)))), axis=1)
 Fz_factor           = np.concatenate((np.pad(Fz_factor_b.T, ((0,N_s), (0,0))), np.pad(Fz_factor_s.T, ((N_b,0),(0,0)))), axis=1)
+f_nl                = np.zeros((Nm,Nm))
+f_nl[Nm_b:,Nm_b:]   = f_nl_s
 M                   = np.diag(np.concatenate((mn_b, mn_s)))
 C                   = np.diag(np.concatenate((cn_b, cn_s)))
 K                   = np.diag(np.concatenate((kn_b, kn_s)))
@@ -225,10 +229,10 @@ if dim3_coupling:
 else:
     A = Az
 
-N_s = A.shape[0]
+N_c = A.shape[0]
 
 A_plus      = np.linalg.pinv(A)
-b           = np.zeros(N_s)
+b           = np.zeros(N_c)
 M_rt_inv    = np.diag(np.concatenate((mn_b**(-1/2),mn_s**(-1/2))))
 B           = A @ M_rt_inv
 B_plus      = np.linalg.pinv(B)
@@ -238,9 +242,9 @@ M_inv       =  np.diag(np.concatenate((1/mn_b,1/mn_s)))
 
 #%% Time-domain parameters
 
-Fe      = 100e3
+Fe      = 80e3
 Te      = 1/Fe
-T       = 0.1
+T       = 5
 t       = np.arange(0,T,Te)
 N_t     = t.size
 
@@ -279,7 +283,6 @@ start = time.time()
 print("----------- Begin UK simulation -----------")
 for i in range(N_t-1):
     if i%(N_t//(100/1))==0 and i!=0: 
-        print(i)
         time_diff = time.time() - start
         remaining_time = (100 - i//(N_t//(100/1))) * time_diff/(i//(N_t//(100/1)))
         print(str(i//(N_t//(100/1)))+"% (time = "+str(np.round(time_diff))+
@@ -288,10 +291,11 @@ for i in range(N_t-1):
     
     q[:,i+1]                = q[:,i] + Te * qd[:,i] + 0.5 * Te**2 * qdd[:,i]
     q[:,i+1]                = q[:,i+1] - constraint_correction * A_plus @ (A @ q[:,i+1] - b)
-    const_violation[i+1]    = np.abs(A @ q[:,i+1] - b).sum(axis=0) / N_s
+    const_violation[i+1]    = np.abs(A @ q[:,i+1] - b).sum(axis=0) / N_c
     qd_half                 = qd[:,i] + 0.5 * Te * qdd[:,i]
     
     F_ext[:,i]  = exc_func(t[i+1], idx_exc, Fz_factor)
+    F_ext[:,i]  = F_ext[:,i] + (q[:,i+1].real) * (f_nl @ (q[:,i+1].real)**2) # Nonlinearity
     F           = - K @ q[:,i+1] - C @ qd_half + F_ext[:,i]
     
     qudd        = M_inv @ F
@@ -308,12 +312,12 @@ print("------------ End UK simulation ------------")
     
 #%% Save results
 
-np.savez("Data/" + name+".npz", N=N, Nm=Nm, 
+np.savez("Data/" + name + "_T_" + str(T) + "_s.npz", N=N, Nm=Nm, 
          dim3_coupling=dim3_coupling, q=q, qd=qd, qdd=qdd, F_ext=F_ext, 
          F_c=F_c, const_violation=const_violation, t=t, M=M, C=C, K=K, A=A, 
          b=b, B=B, W=W, x=x, y=y, z=z, phinx=phix, phiny=phiy,
          phinz=phiz, idx_exc=idx_exc)
-print("Simulation saved as " + name + ".npz")
+print("Simulation saved as " + name  + "_T_" + str(T) +"_s.npz")
 
 #%% Check results
 
@@ -333,9 +337,10 @@ plt.plot(t, np.real(F_c[idx_mode]))
 plt.xlabel("t (s)")
 plt.ylabel("Fc(t) for mode n°"+str(idx_mode))
 
-z_phys      = (phiz[idx_exc,:] @ q)
-zd_phys     = (phiz[idx_exc,:] @ qd)
-zdd_phys    = (phiz[idx_exc,:] @ qdd)
+idx_z = idx_coupl[0,0]
+z_phys      = (phiz[idx_z,:] @ q)
+zd_phys     = (phiz[idx_z,:] @ qd)
+zdd_phys    = (phiz[idx_z,:] @ qdd)
 
 plt.figure()
 plt.plot(t, np.real(z_phys))
@@ -351,15 +356,15 @@ plt.ylabel("Mean square constraint violation for all constraints")
 
 undersample = int(np.floor(Fe/40e3))
 rate        = int(np.round(Fe / undersample)) 
-scaled      = np.asarray(np.real(zd_phys[::undersample]), dtype=np.float32)
-scaled      = scaled / ( np.max(np.abs(scaled[100:])) +  (np.max(np.abs(scaled))==0) ) 
+scaled      = np.asarray(np.real(zdd_phys[::undersample]), dtype=np.float32)
+scaled      = scaled / ( np.max(np.abs(scaled)) +  (np.max(np.abs(scaled))==0) ) 
 scaled      = scaled - np.mean(scaled) 
-write("Audio/" + name + ".wav", rate, np.pad(scaled[100:], (int(1*rate),0)))
+write("Audio/" + name + "_T_" + str(T) + "_s.wav", rate, np.pad(scaled, (int(1*rate),0)))
 
 #%%
 
 plt.figure()
-plt.plot(np.arange(0,T,1/rate)[-scaled[100:].size:], scaled[100:])
+plt.plot( np.arange(0,T+1,1/rate), np.pad(scaled, (int(1*rate),0)))
 
 #%%
 
